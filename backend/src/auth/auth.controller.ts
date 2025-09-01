@@ -12,7 +12,7 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     const result = await this.authService.login(loginDto, res);
-    return result;
+    return res.json({ data: result });
   }
 
   @Post('refresh')

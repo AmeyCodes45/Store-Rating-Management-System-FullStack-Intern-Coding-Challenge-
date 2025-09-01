@@ -1,23 +1,14 @@
-import { IsString, IsOptional, MaxLength, IsEmail, MinLength, Matches } from 'class-validator';
+import { IsString, IsEmail, IsOptional, MinLength, MaxLength, Matches } from 'class-validator';
 import { PASSWORD_REGEX } from '../../common/utils/regex.util';
 
-export class CreateStoreDto {
-  @IsString()
-  @MaxLength(100)
-  name: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(400)
-  address?: string;
-
+export class CreateAdminDto {
   @IsString()
   @MinLength(20)
   @MaxLength(60)
-  ownerName: string;
+  name: string;
 
   @IsEmail()
-  ownerEmail: string;
+  email: string;
 
   @IsString()
   @MinLength(8)
@@ -25,10 +16,10 @@ export class CreateStoreDto {
   @Matches(PASSWORD_REGEX, {
     message: 'Password must contain at least 1 uppercase letter and 1 special character',
   })
-  ownerPassword: string;
+  password: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(400)
-  ownerAddress?: string;
+  address?: string;
 }

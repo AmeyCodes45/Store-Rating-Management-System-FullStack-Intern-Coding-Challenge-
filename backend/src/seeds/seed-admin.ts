@@ -10,7 +10,7 @@ async function seedAdmin() {
     const usersService = app.get(UsersService);
 
     const adminEmail = 'admin@store.com';
-    const existingAdmin = await usersService.findOne(adminEmail).catch(() => null);
+    const existingAdmin = await usersService.findByEmail(adminEmail);
 
     if (!existingAdmin) {
       const hashedPassword = await hashPassword('AdminPass@123');

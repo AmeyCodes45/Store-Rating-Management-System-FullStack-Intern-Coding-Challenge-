@@ -18,6 +18,13 @@ export class RatingsController {
     return this.ratingsService.upsertRating(user.id, upsertRatingDto);
   }
 
+  @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  getCount() {
+    return this.ratingsService.getRatingsCount();
+  }
+
   @Get('stores/:storeId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STORE_OWNER, UserRole.ADMIN)

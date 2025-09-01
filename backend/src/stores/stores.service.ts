@@ -6,6 +6,7 @@ import { Rating } from '../ratings/rating.entity';
 import { CreateStoreDto, UpdateStoreDto, ListStoresDto } from './dto';
 import { User } from '../users/user.entity';
 import { UserRole } from '../common/decorators/roles.decorator';
+import { hashPassword } from '../common/utils/password.util';
 
 @Injectable()
 export class StoresService {
@@ -18,29 +19,42 @@ export class StoresService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createStoreDto: CreateStoreDto): Promise<Store> {
-    const owner = await this.userRepository.findOne({
-      where: { id: createStoreDto.ownerId },
+  async create(createStoreDto: CreateStoreDto): Promise<{ store: Store; owner: User; credentials: { email: string; password: string } }> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createStoreDto.ownerEmail },
     });
 
-    if (!owner) {
-      throw new NotFoundException('Store owner not found');
+    if (existingUser) {
+      throw new BadRequestException('User with this email already exists');
     }
 
-    if (owner.role !== UserRole.STORE_OWNER) {
-      throw new BadRequestException('User must be a store owner');
-    }
-
-    const existingStore = await this.storeRepository.findOne({
-      where: { ownerId: createStoreDto.ownerId },
+    const hashedPassword = await hashPassword(createStoreDto.ownerPassword);
+    const owner = this.userRepository.create({
+      name: createStoreDto.ownerName,
+      email: createStoreDto.ownerEmail,
+      password: hashedPassword,
+      address: createStoreDto.ownerAddress,
+      role: UserRole.STORE_OWNER,
     });
 
-    if (existingStore) {
-      throw new BadRequestException('User already owns a store');
-    }
+    const savedOwner = await this.userRepository.save(owner);
 
-    const store = this.storeRepository.create(createStoreDto);
-    return this.storeRepository.save(store);
+    const store = this.storeRepository.create({
+      name: createStoreDto.name,
+      address: createStoreDto.address,
+      ownerId: savedOwner.id,
+    });
+
+    const savedStore = await this.storeRepository.save(store);
+
+    return {
+      store: savedStore,
+      owner: savedOwner,
+      credentials: {
+        email: createStoreDto.ownerEmail,
+        password: createStoreDto.ownerPassword,
+      },
+    };
   }
 
   async findAll(listStoresDto: ListStoresDto) {

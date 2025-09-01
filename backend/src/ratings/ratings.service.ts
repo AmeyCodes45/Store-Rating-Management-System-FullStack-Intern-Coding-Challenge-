@@ -123,4 +123,9 @@ export class RatingsService {
       where: { userId, storeId },
     });
   }
+
+  async getRatingsCount(): Promise<{ total: number }> {
+    const total = await this.ratingRepository.count();
+    return { total };
+  }
 }

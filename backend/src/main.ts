@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,10 +18,10 @@ async function bootstrap() {
   console.log('JWT_REFRESH_SECRET:', configService.get('JWT_REFRESH_SECRET') ? 'SET' : 'NOT SET');
   
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN'),
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Authorization',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
   
   app.use(cookieParser());
@@ -30,9 +31,11 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
+
+  app.useGlobalInterceptors(new ResponseInterceptor());
   
   const port = configService.get('PORT') || 4000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap();

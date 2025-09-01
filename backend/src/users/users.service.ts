@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, ILike } from 'typeorm';
 import { User } from './user.entity';
 import { UserRole } from '../common/decorators/roles.decorator';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto, CreateAdminDto } from './dto';
 import { PaginationQueryDto, SortFilterDto } from '../common/dto';
 import { hashPassword } from '../common/utils/password.util';
 
@@ -26,10 +26,38 @@ export class UsersService {
     const hashedPassword = await hashPassword(createUserDto.password);
     const user = this.userRepository.create({
       ...createUserDto,
+      role: createUserDto.role || UserRole.USER,
       password: hashedPassword,
     });
 
     return this.userRepository.save(user);
+  }
+
+  async createAdmin(createAdminDto: CreateAdminDto): Promise<{ admin: User; credentials: { email: string; password: string } }> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createAdminDto.email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('User with this email already exists');
+    }
+
+    const hashedPassword = await hashPassword(createAdminDto.password);
+    const admin = this.userRepository.create({
+      ...createAdminDto,
+      role: UserRole.ADMIN,
+      password: hashedPassword,
+    });
+
+    const savedAdmin = await this.userRepository.save(admin);
+
+    return {
+      admin: savedAdmin,
+      credentials: {
+        email: createAdminDto.email,
+        password: createAdminDto.password,
+      },
+    };
   }
 
   async findAll(
@@ -86,6 +114,12 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { email },
+    });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

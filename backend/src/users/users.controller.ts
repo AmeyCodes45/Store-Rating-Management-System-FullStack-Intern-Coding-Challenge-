@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto, CreateAdminDto } from './dto';
 import { PaginationQueryDto, SortFilterDto } from '../common/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -8,14 +9,20 @@ import { Roles, UserRole } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/user.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @Post('register')
+  async register(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
+    const result = await this.usersService.create(createUserDto);
+    return res.json({ data: result });
+  }
+
+  @Post('admin')
   @Roles(UserRole.ADMIN)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async createAdmin(@Body() createAdminDto: CreateAdminDto, @Res() res: Response) {
+    const result = await this.usersService.createAdmin(createAdminDto);
+    return res.json({ data: result });
   }
 
   @Get()
