@@ -113,15 +113,6 @@ JWT_ACCESS_EXPIRES=15m
 JWT_REFRESH_EXPIRES=7d
 ```
 
-### Frontend `.env` (example)
-```
-VITE_API_URL=http://localhost:4000
-```
-
-> **Tip:** Ensure there are **no stray characters** in `.env` (e.g., quotes or trailing letters). Each line should be `KEY=VALUE` with no quotes.
-
----
-
 ## 🧪 Seeding & Default Login
 After `npm run seed` in **backend**:
 - **Admin**
