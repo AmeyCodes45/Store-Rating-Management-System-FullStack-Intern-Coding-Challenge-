@@ -1,119 +1,156 @@
+
 # Store Rating Management System
 
-A full-stack web application that allows users to submit ratings (1–5 stars) for registered stores.  
-The system includes role-based access (Admin, Store Owner, User) with authentication, store management, and rating features.  
+A full‑stack web app where users rate registered stores (⭐1–5). Includes role‑based access (Admin, Store Owner, User), authentication, store management, and rating features.
 
-- **Backend**: NestJS (TypeScript)  
-- **Frontend**: React 18 + Vite  
-- **Database**: PostgreSQL  
-- **Styling**: TailwindCSS + shadcn/ui  
+> **Stack**: NestJS (TypeScript) · React 18 + Vite · PostgreSQL · TailwindCSS + shadcn/ui
 
 ---
 
-## 🎥 Demo Video  
-https://youtu.be/f1R5oIc8nGY?si=OSBRPoBdcccNO7p8
+## 🎥 Demo
+
+[![Store Rating Demo](https://img.youtube.com/vi/f1R5oIc8nGY/0.jpg)](https://youtu.be/f1R5oIc8nGY?si=OSBRPoBdcccNO7p8)
 
 ---
 
-## ⚙️ Features
-- JWT Authentication & Authorization  
-- Admin dashboard for managing users & stores  
-- Store owners can view ratings for their stores  
-- Users can rate stores (1–5 stars)  
-- Secure password hashing with bcrypt  
-- Validation on both client and server side  
-- Responsive UI with TailwindCSS  
+## ✨ Features
+- JWT **Authentication** (access + refresh tokens)
+- **RBAC**: Admin / Store Owner / User
+- Admin dashboard: manage users & stores
+- Store Owners: view ratings for their stores
+- Users: rate stores (1–5 stars), edit own rating
+- **bcrypt** password hashing
+- Client & server **validation**
+- Responsive UI (Tailwind + shadcn/ui)
 
 ---
 
-## 🛠️ Prerequisites
-- Node.js **18+**  
-- PostgreSQL **12+**  
-- npm or yarn  
+## 🧩 Project Structure
+```
+store-rating-system/
+│── backend/          # NestJS API (TypeScript)
+│   ├── src/
+│   ├── prisma|typeorm/  # depends on ORM used
+│   ├── .env.example
+│   └── package.json
+│── frontend/         # React 18 + Vite
+│   ├── src/
+│   ├── .env.example
+│   └── package.json
+└── README.md
+```
+
+---
+
+## ⚙️ Prerequisites
+- Node.js **18+**
+- PostgreSQL **12+**
+- npm or yarn
+
+---
+
+## 🚀 Quick Start (Local)
+```bash
+# 1) Clone
+git clone <repository-url> store-rating-system
+cd store-rating-system
+
+# 2) Start database (choose one)
+#    A) Use local Postgres you already have
+#    B) Or spin up via Docker (optional)
+# docker run --name store-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=store_rating -p 5432:5432 -d postgres:16
+
+# 3) Backend
+cd backend
+cp .env.example .env   # then edit values
+npm install
+npm run build
+npm run seed           # creates default admin user
+npm run start:dev      # API at http://localhost:4000
+
+# 4) Frontend
+cd ../frontend
+cp .env.example .env   # then edit values
+npm install
+npm run dev            # UI at http://localhost:5173
+```
 
 ---
 
 ## 🗄️ Database Setup
-1. Install PostgreSQL and create a database:
-   ```sql
-   CREATE DATABASE store_rating;
-Default local connection settings:
+Create the database (if not using Docker image):
+```sql
+CREATE DATABASE store_rating;
+```
+**Default local connection**
+- Host: `localhost`
+- Port: `5432`
+- DB: `store_rating`
+- User: `postgres` (or your user)
+- Password: `your password`
 
-Database: store_rating
+---
 
-Host: localhost
-Port: 5432
-User: UserName
-Password: Password
-Configure .env in the backend with your credentials:
+## 🔐 Environment Variables
 
-.env
+### Backend `.env` (example)
+```
+# Server
+PORT=4000
+CORS_ORIGIN=http://localhost:5173
 
-"PORT=4000
-DB_NAME=store_rating
+# Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=YourUserName
-DB_PASS=YourPassword
-CORS_ORIGIN=http://localhost:5173
-JWT_ACCESS_SECRET=your_access_secret_here
-JWT_REFRESH_SECRET=your_refresh_secret_here
+DB_NAME=store_rating
+DB_USER=postgres
+DB_PASS=postgres
+
+# Auth
+JWT_ACCESS_SECRET=change_me_access
+JWT_REFRESH_SECRET=change_me_refresh
 JWT_ACCESS_EXPIRES=15m
-JWT_REFRESH_EXPIRES=7d"
+JWT_REFRESH_EXPIRES=7d
+```
+
+### Frontend `.env` (example)
+```
+VITE_API_URL=http://localhost:4000
+```
+
+> **Tip:** Ensure there are **no stray characters** in `.env` (e.g., quotes or trailing letters). Each line should be `KEY=VALUE` with no quotes.
+
+---
+
+## 🧪 Seeding & Default Login
+After `npm run seed` in **backend**:
+- **Admin**
+  - Email: `admin@store.com`
+  - Password: `AdminPass@123`
+
+> If you change these defaults, update `seed` script logic accordingly.
+
+---
+
+## 🖥️ Scripts
+
+### Backend
+- `npm run start:dev` – run API in watch mode (Nest)
+- `npm run build` – compile TypeScript
+- `npm run seed` – seed DB with default admin (and sample data if provided)
+
+### Frontend
+- `npm run dev` – start Vite dev server
+- `npm run build` – production build
+- `npm run preview` – preview production build
+
+---
 
 
-#Installation & Setup
-1. Clone the Repository
-git clone <repository-url>
-cd store-rating-system
+## 🧰 Tech Notes
+- **NestJS**: Modules for Auth, Users, Stores, Ratings
+- **ORM**: TypeORM or Prisma (ensure one is selected & documented)
+- **Validation**: class‑validator / class‑transformer DTOs
+- **Frontend**: React Query / Axios for data fetching; shadcn/ui for components
 
-2. Backend Setup
-cd backend
-npm install
 
-Run database seed (creates default admin user):
-npm run build
-npm run seed
-
-Start backend server:
-npm run start:dev
-
-3. Frontend Setup
-cd frontend
-npm install
-Start frontend server:
-npm run dev
-
-App will be available at:
-👉 http://localhost:5173
-
-🔑 Default Admin Account
-After seeding the DB, login with:
-Email: admin@store.com
-Password: AdminPass@123
-
-📂 Project Structure
-perl
-Copy code
-store-rating-system/
-│── backend/         # NestJS backend
-│   └── package.json
-│── frontend/        # React frontend (Vite)
-│   └── package.json
-└── README.md
-
-📜 Available Scripts
-Backend
-npm run start:dev → Run backend in dev mode
-npm run seed → Seed DB with default admin
-npm run build → Build backend
-Frontend
-npm run dev → Run frontend in dev mode
-npm run build → Build frontend
-npm run preview → Preview production build
-
-🔐 Security Features
-JWT Authentication with refresh tokens
-Role-based access control (RBAC)
-Password hashing with bcrypt
-CORS configuration
