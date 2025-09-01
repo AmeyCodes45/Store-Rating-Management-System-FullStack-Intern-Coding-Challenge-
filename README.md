@@ -42,18 +42,14 @@ Default local connection settings:
 Database: store_rating
 
 Host: localhost
-
 Port: 5432
-
 User: UserName
-
 Password: Password
-
 Configure .env in the backend with your credentials:
 
-env
-Copy code
-PORT=4000
+.env
+
+"PORT=4000
 DB_NAME=store_rating
 DB_HOST=localhost
 DB_PORT=5432
@@ -63,42 +59,37 @@ CORS_ORIGIN=http://localhost:5173
 JWT_ACCESS_SECRET=your_access_secret_here
 JWT_REFRESH_SECRET=your_refresh_secret_here
 JWT_ACCESS_EXPIRES=15m
-JWT_REFRESH_EXPIRES=7d
+JWT_REFRESH_EXPIRES=7d"
+
 
 #Installation & Setup
 1. Clone the Repository
-
 git clone <repository-url>
 cd store-rating-system
 
 2. Backend Setup
-
 cd backend
 npm install
-Run database seed (creates default admin user):
 
+Run database seed (creates default admin user):
 npm run build
 npm run seed
-Start backend server:
 
+Start backend server:
 npm run start:dev
 
 3. Frontend Setup
-
 cd frontend
 npm install
 Start frontend server:
-
-
 npm run dev
+
 App will be available at:
 👉 http://localhost:5173
 
 🔑 Default Admin Account
 After seeding the DB, login with:
-
 Email: admin@store.com
-
 Password: AdminPass@123
 
 📂 Project Structure
@@ -110,26 +101,19 @@ store-rating-system/
 │── frontend/        # React frontend (Vite)
 │   └── package.json
 └── README.md
+
 📜 Available Scripts
 Backend
 npm run start:dev → Run backend in dev mode
-
 npm run seed → Seed DB with default admin
-
 npm run build → Build backend
-
 Frontend
 npm run dev → Run frontend in dev mode
-
 npm run build → Build frontend
-
 npm run preview → Preview production build
 
 🔐 Security Features
 JWT Authentication with refresh tokens
-
 Role-based access control (RBAC)
-
 Password hashing with bcrypt
-
 CORS configuration
