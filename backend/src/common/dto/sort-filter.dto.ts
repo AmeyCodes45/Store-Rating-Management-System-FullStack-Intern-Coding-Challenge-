@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsIn } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsEnum } from 'class-validator';
+import { UserRole } from '../decorators/roles.decorator';
 
 export class SortFilterDto {
   @IsOptional()
@@ -14,6 +15,6 @@ export class SortFilterDto {
   search?: string;
 
   @IsOptional()
-  @IsString()
-  filterBy?: string;
+  @IsEnum(UserRole)
+  filterBy?: UserRole;
 }

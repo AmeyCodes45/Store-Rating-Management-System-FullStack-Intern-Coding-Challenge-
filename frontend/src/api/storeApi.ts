@@ -7,12 +7,14 @@ export const storeApi = {
     return response.data.data;
   },
 
-  getAll: async (page = 1, limit = 10, search = ''): Promise<PaginatedResponse<Store>> => {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-      ...(search && { search }),
-    });
+  getAll: async (page = 1, limit = 10, search = '', sortBy = 'createdAt', sortOrder = 'DESC'): Promise<PaginatedResponse<Store>> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+    if (search) params.append('search', search);
+    if (sortBy) params.append('sortBy', sortBy);
+    if (sortOrder) params.append('sortOrder', sortOrder);
+    
     const response = await axiosClient.get(`/stores?${params}`);
     return response.data.data;
   },

@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, ILike } from 'typeorm';
 import { User } from './user.entity';
 import { UserRole } from '../common/decorators/roles.decorator';
-import { CreateUserDto, UpdateUserDto, CreateAdminDto } from './dto';
+import { CreateUserDto, UpdateUserDto, CreateAdminDto, UpdatePasswordDto } from './dto';
 import { PaginationQueryDto, SortFilterDto } from '../common/dto';
 import { hashPassword } from '../common/utils/password.util';
+import { comparePassword } from '../common/utils/password.util';
 
 @Injectable()
 export class UsersService {
@@ -169,5 +170,18 @@ export class UsersService {
     });
 
     return { total, byRole: roleCounts };
+  }
+
+  async updatePassword(userId: string, updatePasswordDto: UpdatePasswordDto): Promise<void> {
+    const user = await this.findOne(userId);
+
+    const isCurrentPasswordValid = await comparePassword(updatePasswordDto.currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const hashedNewPassword = await hashPassword(updatePasswordDto.newPassword);
+    user.password = hashedNewPassword;
+    await this.userRepository.save(user);
   }
 }

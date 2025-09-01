@@ -58,52 +58,96 @@ export class StoresService {
   }
 
   async findAll(listStoresDto: ListStoresDto) {
-    const { page = 1, limit = 10, search } = listStoresDto;
+    const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'DESC' } = listStoresDto;
 
-    const queryBuilder = this.storeRepository
-      .createQueryBuilder('store')
-      .leftJoinAndSelect('store.owner', 'owner')
-      .leftJoinAndSelect('store.ratings', 'ratings');
+    let stores: Store[];
+    let total: number;
 
-    if (search) {
-      queryBuilder.where(
-        '(store.name ILIKE :search OR store.address ILIKE :search)',
-        { search: `%${search}%` },
+    if (sortBy === 'averageRating') {
+      // Get total count first
+      const countQuery = this.storeRepository.createQueryBuilder('store');
+      if (search) {
+        countQuery.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
+      }
+      total = await countQuery.getCount();
+
+      // Get all stores first, then sort by rating in memory
+      const allStoresQuery = this.storeRepository
+        .createQueryBuilder('store')
+        .leftJoinAndSelect('store.owner', 'owner');
+      
+      if (search) {
+        allStoresQuery.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
+      }
+
+      const allStores = await allStoresQuery.getMany();
+
+      // Calculate ratings and sort
+      const storesWithRatings = await Promise.all(
+        allStores.map(async (store) => {
+          const ratingData = await this.getStoreAverageRating(store.id);
+          return {
+            ...store,
+            averageRating: ratingData.average,
+            totalRatings: ratingData.total,
+          };
+        })
       );
+
+      // Sort by average rating
+      storesWithRatings.sort((a, b) => {
+        if (sortOrder === 'ASC') {
+          return a.averageRating - b.averageRating;
+        } else {
+          return b.averageRating - a.averageRating;
+        }
+      });
+
+      // Apply pagination
+      const startIndex = (page - 1) * limit;
+      stores = storesWithRatings.slice(startIndex, startIndex + limit);
+    } else {
+      // Regular sorting for other fields
+      const queryBuilder = this.storeRepository
+        .createQueryBuilder('store')
+        .leftJoinAndSelect('store.owner', 'owner');
+
+      if (search) {
+        queryBuilder.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
+      }
+
+      queryBuilder.orderBy(`store.${sortBy}`, sortOrder as 'ASC' | 'DESC');
+
+      const [storeResults, totalCount] = await queryBuilder
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      stores = storeResults;
+      total = totalCount;
+
+      // Add rating data for non-rating sorted results
+      const storesWithRatings = await Promise.all(
+        stores.map(async (store) => {
+          const ratingData = await this.getStoreAverageRating(store.id);
+          return {
+            ...store,
+            averageRating: ratingData.average,
+            totalRatings: ratingData.total,
+          };
+        })
+      );
+
+      stores = storesWithRatings;
     }
 
-    const [stores, total] = await queryBuilder
-      .orderBy('store.createdAt', 'DESC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
-
-    const storesWithAvgRating = await Promise.all(
-      stores.map(async (store) => {
-        const avgRating = await this.calculateAverageRating(store.id);
-        return {
-          id: store.id,
-          name: store.name,
-          address: store.address,
-          owner: {
-            id: store.owner?.id,
-            name: store.owner?.name,
-            email: store.owner?.email,
-          },
-          averageRating: avgRating,
-          totalRatings: store.ratings?.length || 0,
-          createdAt: store.createdAt,
-          updatedAt: store.updatedAt,
-        };
-      }),
-    );
-
     return {
-      data: storesWithAvgRating,
+      data: stores,
       meta: {
         page,
         limit,
         total,
+        totalPages: Math.ceil(total / limit),
       },
     };
   }

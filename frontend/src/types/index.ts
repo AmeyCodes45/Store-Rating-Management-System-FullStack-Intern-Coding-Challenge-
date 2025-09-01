@@ -66,7 +66,10 @@ export interface UpdateUserData {
 export interface CreateStoreData {
   name: string;
   address?: string;
-  ownerId: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPassword: string;
+  ownerAddress?: string;
 }
 
 export interface UpdateStoreData {
@@ -110,4 +113,37 @@ export interface CreateAdminResponse {
     email: string;
     password: string;
   };
+}
+
+export interface CreateStoreResponse {
+  store: Store;
+  owner: User;
+  credentials: {
+    email: string;
+    password: string;
+  };
+}
+
+export interface UnifiedCreateUserData {
+  name: string;
+  email: string;
+  password: string;
+  address?: string;
+  role: UserRole;
+  storeName?: string;
+  storeAddress?: string;
+}
+
+export interface UnifiedCreateUserResponse {
+  user: User;
+  store?: Store;
+  credentials: {
+    email: string;
+    password: string;
+  };
+}
+
+export interface UpdatePasswordData {
+  currentPassword: string;
+  newPassword: string;
 }

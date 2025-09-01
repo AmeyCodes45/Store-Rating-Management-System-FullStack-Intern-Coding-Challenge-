@@ -8,8 +8,6 @@ import { Users, Store, Star, LogOut } from "lucide-react";
 import UsersList from "./UsersList";
 import StoresList from "./StoresList";
 import CreateUserModal from "./CreateUserModal";
-import CreateStoreModal from "./CreateStoreModal";
-import CreateAdminModal from "./CreateAdminModal";
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -17,13 +15,12 @@ const AdminDashboard: React.FC = () => {
     "overview"
   );
   const [showCreateUser, setShowCreateUser] = useState(false);
-  const [showCreateStore, setShowCreateStore] = useState(false);
-  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalStores: 0,
     totalRatings: 0,
   });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -37,7 +34,7 @@ const AdminDashboard: React.FC = () => {
         ratingApi.getCount(),
       ]);
       setStats({
-        totalUsers: userCount.total,
+        totalUsers: (userCount.byRole.USER || 0) + (userCount.byRole.ADMIN || 0),
         totalStores: storeCount.total,
         totalRatings: ratingCount.total,
       });
@@ -47,7 +44,9 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
+    setIsLoggingOut(false);
   };
 
   if (user?.role !== UserRole.ADMIN) {
@@ -70,10 +69,36 @@ const AdminDashboard: React.FC = () => {
               </span>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
+                disabled={isLoggingOut}
+                className={`flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 ${
+                  isLoggingOut ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                {isLoggingOut ? (
+                  <svg
+                    className="animate-spin h-4 w-4 text-gray-700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
+                <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
               </button>
             </div>
           </div>
@@ -189,19 +214,7 @@ const AdminDashboard: React.FC = () => {
                       onClick={() => setShowCreateUser(true)}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
                     >
-                      Create User
-                    </button>
-                    <button
-                      onClick={() => setShowCreateStore(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-                    >
-                      Create Store
-                    </button>
-                    <button
-                      onClick={() => setShowCreateAdmin(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700"
-                    >
-                      Create Admin
+                      Add User
                     </button>
                   </div>
                 </div>
@@ -220,26 +233,6 @@ const AdminDashboard: React.FC = () => {
           onClose={() => setShowCreateUser(false)}
           onUserCreated={() => {
             setShowCreateUser(false);
-            loadStats();
-          }}
-        />
-      )}
-
-      {showCreateStore && (
-        <CreateStoreModal
-          onClose={() => setShowCreateStore(false)}
-          onStoreCreated={() => {
-            setShowCreateStore(false);
-            loadStats();
-          }}
-        />
-      )}
-
-      {showCreateAdmin && (
-        <CreateAdminModal
-          onClose={() => setShowCreateAdmin(false)}
-          onAdminCreated={() => {
-            setShowCreateAdmin(false);
             loadStats();
           }}
         />

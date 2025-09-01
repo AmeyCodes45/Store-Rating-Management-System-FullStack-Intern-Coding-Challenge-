@@ -1,30 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { userApi } from '../../api/userApi';
 import { User, UserRole } from '../../types';
-import { Edit, Trash2, Plus, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, ArrowUpDown } from 'lucide-react';
 import CreateUserModal from './CreateUserModal';
+import { useAuth } from '../../context/AuthContext';
 
 interface UsersListProps {
   onUserCreated: () => void;
 }
 
 const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBy, setFilterBy] = useState('');
+  const [filterBy, setFilterBy] = useState(UserRole.USER);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage, searchTerm, filterBy]);
+  }, [currentPage, searchTerm, filterBy, sortBy, sortOrder]);
 
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await userApi.getAll(currentPage, 10, searchTerm, filterBy);
+      const response = await userApi.getAll(currentPage, 10, searchTerm, filterBy, sortBy, sortOrder);
       setUsers(response.data);
       setTotalPages(Math.ceil(response.meta.total / response.meta.limit));
     } catch (error) {
@@ -39,6 +43,7 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
       try {
         await userApi.delete(userId);
         loadUsers();
+        onUserCreated();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
@@ -55,6 +60,17 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getFilterDisplayName = (role: UserRole) => {
+    switch (role) {
+      case UserRole.USER:
+        return 'Normal Users';
+      case UserRole.ADMIN:
+        return 'Admin Users';
+      default:
+        return role;
     }
   };
 
@@ -88,19 +104,40 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
         </div>
         <select
           value={filterBy}
-          onChange={(e) => setFilterBy(e.target.value)}
+          onChange={(e) => setFilterBy(e.target.value as UserRole)}
           className="block w-48 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         >
-          <option value="">All Roles</option>
-          <option value={UserRole.ADMIN}>Admin</option>
-          <option value={UserRole.STORE_OWNER}>Store Owner</option>
-          <option value={UserRole.USER}>User</option>
+          <option value={UserRole.USER}>{getFilterDisplayName(UserRole.USER)}</option>
+          <option value={UserRole.ADMIN}>{getFilterDisplayName(UserRole.ADMIN)}</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="block w-32 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="name">Name</option>
+          <option value="email">Email</option>
+          <option value="createdAt">Created</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as 'ASC' | 'DESC')}
+          className="block w-24 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="ASC">ASC</option>
+          <option value="DESC">DESC</option>
         </select>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="px-4 py-12 text-center">
+            <p className="text-gray-500">No {getFilterDisplayName(filterBy).toLowerCase()} found.</p>
+          </div>
         </div>
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -124,13 +161,15 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900 p-1"
-                      title="Delete user"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {user.id !== currentUser?.id && (
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Delete user"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>
@@ -166,6 +205,8 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
           onClose={() => setShowCreateModal(false)}
           onUserCreated={() => {
             setShowCreateModal(false);
+            setCurrentPage(1);
+            loadUsers();
             onUserCreated();
           }}
         />

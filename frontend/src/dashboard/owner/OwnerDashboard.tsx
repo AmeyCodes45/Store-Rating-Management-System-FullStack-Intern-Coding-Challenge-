@@ -3,13 +3,16 @@ import { useAuth } from '../../context/AuthContext';
 import { storeApi } from '../../api/storeApi';
 import { ratingApi } from '../../api/ratingApi';
 import { UserRole } from '../../types';
-import { Store, Star, LogOut, Users } from 'lucide-react';
+import { Store, Star, LogOut, Users, Key } from 'lucide-react';
+import UpdatePasswordModal from '../user/UpdatePasswordModal';
 
 const OwnerDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [store, setStore] = useState<any>(null);
   const [ratings, setRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUpdatePasswordModal, setShowUpdatePasswordModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -36,7 +39,13 @@ const OwnerDashboard: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
+    setIsLoggingOut(false);
+  };
+
+  const handlePasswordUpdateSuccess = () => {
+    alert('Password updated successfully!');
   };
 
   if (user?.role !== UserRole.STORE_OWNER) {
@@ -73,11 +82,44 @@ const OwnerDashboard: React.FC = () => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">Welcome, {user.name}</span>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowUpdatePasswordModal(true)}
                 className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <Key className="h-4 w-4" />
+                <span>Update Password</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 ${
+                  isLoggingOut ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isLoggingOut ? (
+                  <svg
+                    className="animate-spin h-4 w-4 text-gray-700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
+                <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
               </button>
             </div>
           </div>
@@ -200,6 +242,12 @@ const OwnerDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <UpdatePasswordModal
+        isOpen={showUpdatePasswordModal}
+        onClose={() => setShowUpdatePasswordModal(false)}
+        onSuccess={handlePasswordUpdateSuccess}
+      />
     </div>
   );
 };

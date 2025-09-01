@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto, CreateAdminDto } from './dto';
+import { CreateUserDto, UpdateUserDto, CreateAdminDto, UpdatePasswordDto } from './dto';
 import { PaginationQueryDto, SortFilterDto } from '../common/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -26,21 +26,32 @@ export class UsersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  findAll(@Query() paginationQuery: PaginationQueryDto, @Query() sortFilter: SortFilterDto) {
-    return this.usersService.findAll(paginationQuery, sortFilter);
+  async findAll(@Query() paginationQuery: PaginationQueryDto, @Query() sortFilter: SortFilterDto, @Res() res: Response) {
+    const result = await this.usersService.findAll(paginationQuery, sortFilter);
+    return res.json(result);
   }
 
   @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  getCount() {
-    return this.usersService.getUsersCount();
+  async getCount(@Res() res: Response) {
+    const result = await this.usersService.getUsersCount();
+    return res.json({ data: result });
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Patch('password')
+  @UseGuards(JwtAuthGuard)
+  async updatePassword(@Body() updatePasswordDto: UpdatePasswordDto, @CurrentUser() currentUser: any, @Res() res: Response) {
+    await this.usersService.updatePassword(currentUser.id, updatePasswordDto);
+    return res.json({ message: 'Password updated successfully' });
   }
 
   @Patch(':id')

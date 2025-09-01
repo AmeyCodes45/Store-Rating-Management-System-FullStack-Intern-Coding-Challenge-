@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storeApi } from '../../api/storeApi';
 import { Store } from '../../types';
-import { Trash2, Plus, Search, Star } from 'lucide-react';
-import CreateStoreModal from './CreateStoreModal';
+import { Trash2, Search, Star, ArrowUpDown } from 'lucide-react';
 
 interface StoresListProps {
   onStoreCreated: () => void;
@@ -12,18 +11,19 @@ const StoresList: React.FC<StoresListProps> = ({ onStoreCreated }) => {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadStores();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, sortBy, sortOrder]);
 
   const loadStores = async () => {
     try {
       setLoading(true);
-      const response = await storeApi.getAll(currentPage, 10, searchTerm);
+      const response = await storeApi.getAll(currentPage, 10, searchTerm, sortBy, sortOrder);
       setStores(response.data);
       setTotalPages(Math.ceil(response.meta.total / response.meta.limit));
     } catch (error) {
@@ -38,6 +38,7 @@ const StoresList: React.FC<StoresListProps> = ({ onStoreCreated }) => {
       try {
         await storeApi.delete(storeId);
         loadStores();
+        onStoreCreated();
       } catch (error) {
         console.error('Error deleting store:', error);
       }
@@ -48,28 +49,40 @@ const StoresList: React.FC<StoresListProps> = ({ onStoreCreated }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">Stores Management</h2>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Store
-        </button>
       </div>
 
-      <div className="flex-1">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search stores..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search stores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
         </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="block w-32 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="name">Name</option>
+          <option value="averageRating">Rating</option>
+          <option value="createdAt">Created</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as 'ASC' | 'DESC')}
+          className="block w-24 px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="ASC">ASC</option>
+          <option value="DESC">DESC</option>
+        </select>
       </div>
 
       {loading ? (
@@ -142,16 +155,6 @@ const StoresList: React.FC<StoresListProps> = ({ onStoreCreated }) => {
             Next
           </button>
         </div>
-      )}
-
-      {showCreateModal && (
-        <CreateStoreModal
-          onClose={() => setShowCreateModal(false)}
-          onStoreCreated={() => {
-            setShowCreateModal(false);
-            onStoreCreated();
-          }}
-        />
       )}
     </div>
   );

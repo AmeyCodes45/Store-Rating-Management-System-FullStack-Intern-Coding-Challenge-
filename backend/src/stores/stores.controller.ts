@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { StoresService } from './stores.service';
 import { CreateStoreDto, UpdateStoreDto, ListStoresDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -13,43 +14,50 @@ export class StoresController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  create(@Body() createStoreDto: CreateStoreDto) {
-    return this.storesService.create(createStoreDto);
+  async create(@Body() createStoreDto: CreateStoreDto, @Res() res: Response) {
+    const result = await this.storesService.create(createStoreDto);
+    return res.json({ data: result });
   }
 
   @Get()
-  findAll(@Query() listStoresDto: ListStoresDto) {
-    return this.storesService.findAll(listStoresDto);
+  async findAll(@Query() listStoresDto: ListStoresDto, @Res() res: Response) {
+    const result = await this.storesService.findAll(listStoresDto);
+    return res.json({ data: result });
   }
 
   @Get('count')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  getCount() {
-    return this.storesService.getStoresCount();
+  async getCount(@Res() res: Response) {
+    const result = await this.storesService.getStoresCount();
+    return res.json({ data: result });
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.storesService.findOne(id);
+  async findOne(@Param('id') id: string, @Res() res: Response) {
+    const result = await this.storesService.findOne(id);
+    return res.json({ data: result });
   }
 
   @Get(':id/average')
-  getAverageRating(@Param('id') id: string) {
-    return this.storesService.getStoreAverageRating(id);
+  async getAverageRating(@Param('id') id: string, @Res() res: Response) {
+    const result = await this.storesService.getStoreAverageRating(id);
+    return res.json({ data: result });
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateStoreDto: UpdateStoreDto) {
-    return this.storesService.update(id, updateStoreDto);
+  async update(@Param('id') id: string, @Body() updateStoreDto: UpdateStoreDto, @Res() res: Response) {
+    const result = await this.storesService.update(id, updateStoreDto);
+    return res.json({ data: result });
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.storesService.remove(id);
+  async remove(@Param('id') id: string, @Res() res: Response) {
+    const result = await this.storesService.remove(id);
+    return res.json({ data: result });
   }
 }
