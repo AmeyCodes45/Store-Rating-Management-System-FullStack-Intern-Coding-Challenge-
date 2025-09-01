@@ -13,4 +13,12 @@ export class ListStoresDto extends PaginationQueryDto implements SortFilterDto {
   @IsOptional()
   @IsString()
   sortOrder?: 'ASC' | 'DESC';
+
+  @IsOptional()
+  @IsString()
+  emailFilter?: string;
+
+  @IsOptional()
+  @IsString()
+  addressFilter?: string;
 }

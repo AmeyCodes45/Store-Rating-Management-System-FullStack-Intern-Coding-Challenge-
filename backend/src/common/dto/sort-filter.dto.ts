@@ -17,4 +17,12 @@ export class SortFilterDto {
   @IsOptional()
   @IsEnum(UserRole)
   filterBy?: UserRole;
+
+  @IsOptional()
+  @IsString()
+  emailFilter?: string;
+
+  @IsOptional()
+  @IsString()
+  addressFilter?: string;
 }

@@ -15,6 +15,8 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState(UserRole.USER);
+  const [emailFilter, setEmailFilter] = useState('');
+  const [addressFilter, setAddressFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,12 +25,12 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage, searchTerm, filterBy, sortBy, sortOrder]);
+  }, [currentPage, searchTerm, filterBy, emailFilter, addressFilter, sortBy, sortOrder]);
 
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await userApi.getAll(currentPage, 10, searchTerm, filterBy, sortBy, sortOrder);
+      const response = await userApi.getAll(currentPage, 10, searchTerm, filterBy, sortBy, sortOrder, emailFilter, addressFilter);
       setUsers(response.data);
       setTotalPages(Math.ceil(response.meta.total / response.meta.limit));
     } catch (error) {
@@ -110,6 +112,34 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
           <option value={UserRole.USER}>{getFilterDisplayName(UserRole.USER)}</option>
           <option value={UserRole.ADMIN}>{getFilterDisplayName(UserRole.ADMIN)}</option>
         </select>
+        <div className="flex-1">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Email filter..."
+              value={emailFilter}
+              onChange={(e) => setEmailFilter(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Address filter..."
+              value={addressFilter}
+              onChange={(e) => setAddressFilter(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+        </div>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
@@ -117,6 +147,7 @@ const UsersList: React.FC<UsersListProps> = ({ onUserCreated }) => {
         >
           <option value="name">Name</option>
           <option value="email">Email</option>
+          <option value="address">Address</option>
           <option value="createdAt">Created</option>
         </select>
         <select

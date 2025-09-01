@@ -66,7 +66,7 @@ export class UsersService {
     sortFilter: SortFilterDto,
   ) {
     const { page = 1, limit = 10 } = paginationQuery;
-    const { sortBy = 'createdAt', sortOrder = 'DESC', search, filterBy } = sortFilter;
+    const { sortBy = 'createdAt', sortOrder = 'DESC', search, filterBy, emailFilter, addressFilter } = sortFilter;
 
     const queryBuilder = this.userRepository.createQueryBuilder('user');
 
@@ -79,6 +79,14 @@ export class UsersService {
 
     if (filterBy) {
       queryBuilder.andWhere('user.role = :filterBy', { filterBy });
+    }
+
+    if (emailFilter) {
+      queryBuilder.andWhere('user.email ILIKE :emailFilter', { emailFilter: `%${emailFilter}%` });
+    }
+
+    if (addressFilter) {
+      queryBuilder.andWhere('user.address ILIKE :addressFilter', { addressFilter: `%${addressFilter}%` });
     }
 
     const [users, total] = await queryBuilder

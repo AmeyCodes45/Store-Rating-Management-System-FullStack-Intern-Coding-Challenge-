@@ -17,7 +17,7 @@ export const userApi = {
     return response.data.data;
   },
 
-  getAll: async (page = 1, limit = 10, search = '', filterBy = '', sortBy = 'createdAt', sortOrder = 'DESC'): Promise<PaginatedResponse<User>> => {
+  getAll: async (page = 1, limit = 10, search = '', filterBy = '', sortBy = 'createdAt', sortOrder = 'DESC', emailFilter = '', addressFilter = ''): Promise<PaginatedResponse<User>> => {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('limit', limit.toString());
@@ -25,6 +25,8 @@ export const userApi = {
     if (filterBy) params.append('filterBy', filterBy);
     if (sortBy) params.append('sortBy', sortBy);
     if (sortOrder) params.append('sortOrder', sortOrder);
+    if (emailFilter) params.append('emailFilter', emailFilter);
+    if (addressFilter) params.append('addressFilter', addressFilter);
     
     const response = await axiosClient.get(`/users?${params}`);
     return response.data;

@@ -58,20 +58,25 @@ export class StoresService {
   }
 
   async findAll(listStoresDto: ListStoresDto) {
-    const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'DESC' } = listStoresDto;
+    const { page = 1, limit = 10, search, sortBy = 'createdAt', sortOrder = 'DESC', emailFilter, addressFilter } = listStoresDto;
 
     let stores: Store[];
     let total: number;
 
     if (sortBy === 'averageRating') {
-      // Get total count first
-      const countQuery = this.storeRepository.createQueryBuilder('store');
+      const countQuery = this.storeRepository.createQueryBuilder('store')
+        .leftJoin('store.owner', 'owner');
       if (search) {
         countQuery.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
       }
+      if (emailFilter) {
+        countQuery.andWhere('owner.email ILIKE :emailFilter', { emailFilter: `%${emailFilter}%` });
+      }
+      if (addressFilter) {
+        countQuery.andWhere('store.address ILIKE :addressFilter', { addressFilter: `%${addressFilter}%` });
+      }
       total = await countQuery.getCount();
 
-      // Get all stores first, then sort by rating in memory
       const allStoresQuery = this.storeRepository
         .createQueryBuilder('store')
         .leftJoinAndSelect('store.owner', 'owner');
@@ -79,10 +84,15 @@ export class StoresService {
       if (search) {
         allStoresQuery.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
       }
+      if (emailFilter) {
+        allStoresQuery.andWhere('owner.email ILIKE :emailFilter', { emailFilter: `%${emailFilter}%` });
+      }
+      if (addressFilter) {
+        allStoresQuery.andWhere('store.address ILIKE :addressFilter', { addressFilter: `%${addressFilter}%` });
+      }
 
       const allStores = await allStoresQuery.getMany();
 
-      // Calculate ratings and sort
       const storesWithRatings = await Promise.all(
         allStores.map(async (store) => {
           const ratingData = await this.getStoreAverageRating(store.id);
@@ -94,7 +104,6 @@ export class StoresService {
         })
       );
 
-      // Sort by average rating
       storesWithRatings.sort((a, b) => {
         if (sortOrder === 'ASC') {
           return a.averageRating - b.averageRating;
@@ -103,11 +112,9 @@ export class StoresService {
         }
       });
 
-      // Apply pagination
       const startIndex = (page - 1) * limit;
       stores = storesWithRatings.slice(startIndex, startIndex + limit);
     } else {
-      // Regular sorting for other fields
       const queryBuilder = this.storeRepository
         .createQueryBuilder('store')
         .leftJoinAndSelect('store.owner', 'owner');
@@ -116,7 +123,19 @@ export class StoresService {
         queryBuilder.where('(store.name ILIKE :search OR store.address ILIKE :search)', { search: `%${search}%` });
       }
 
-      queryBuilder.orderBy(`store.${sortBy}`, sortOrder as 'ASC' | 'DESC');
+      if (emailFilter) {
+        queryBuilder.andWhere('owner.email ILIKE :emailFilter', { emailFilter: `%${emailFilter}%` });
+      }
+
+      if (addressFilter) {
+        queryBuilder.andWhere('store.address ILIKE :addressFilter', { addressFilter: `%${addressFilter}%` });
+      }
+
+      if (sortBy === 'email') {
+        queryBuilder.orderBy('owner.email', sortOrder as 'ASC' | 'DESC');
+      } else {
+        queryBuilder.orderBy(`store.${sortBy}`, sortOrder as 'ASC' | 'DESC');
+      }
 
       const [storeResults, totalCount] = await queryBuilder
         .skip((page - 1) * limit)
@@ -126,7 +145,6 @@ export class StoresService {
       stores = storeResults;
       total = totalCount;
 
-      // Add rating data for non-rating sorted results
       const storesWithRatings = await Promise.all(
         stores.map(async (store) => {
           const ratingData = await this.getStoreAverageRating(store.id);
