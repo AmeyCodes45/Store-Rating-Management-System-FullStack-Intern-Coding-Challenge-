@@ -86,13 +86,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ onClose, onUserCreate
         reset();
         onUserCreated();
       } else if (data.role === UserRole.ADMIN) {
-        const result = await userApi.createAdmin({
+        await userApi.createAdmin({
           name: data.name,
           email: data.email,
           address: data.address,
           password: data.password,
         });
-        await login(result.credentials.email, result.credentials.password);
         reset();
         onUserCreated();
       }
